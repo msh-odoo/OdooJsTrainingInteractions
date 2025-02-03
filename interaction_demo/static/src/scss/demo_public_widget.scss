@@ -1,3 +1,9 @@
+.o_public_widget {
+    &.o_added {
+        background-color: green;
+        opacity: 0.5;
+    }
+}
 .o_img_zoom_body {
     font-size: 1.5rem;
     img {
@@ -27,4 +33,28 @@
     .o_background {
         overflow: auto !important;
     }
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: scale(0.5); }
+    50% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.5); }
+}
+
+.item-added-animation {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: url('path/to/thumb-icon.png') no-repeat center center;
+    background-size: contain;
+    width: 100px;
+    height: 100px;
+    animation: fadeInOut 1s ease-out;
+    pointer-events: none; /* Prevents interaction with the animation element */
+}
+
+.fade-out {
+    opacity: 0;
+    transition: opacity 0.5s ease-out;
 }

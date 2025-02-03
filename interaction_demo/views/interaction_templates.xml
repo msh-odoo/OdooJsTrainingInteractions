@@ -5,7 +5,7 @@
                 <div class="container o_public_widget_page">
                     <h1>Public Widget Example</h1>
                     <div class="row">
-                        <div class="o_public_widget col-4 mb8" t-foreach="[1,2,3,4]" t-as="index">
+                        <div class="o_public_widget col-3 mb8" t-foreach="[1,2,3,4]" t-as="index">
                             <img t-attf-src="/interaction_demo/static/img/{{index}}.jpeg" class="o_widget_image image-zoom img-fluid img-thumbnail rounded mx-auto d-flex mb8" alt="Product Image"/>
                             <div class="o_widget_content">
                                 <input type="text" class="o_quantity form-control mb8" placeholder="Enter Quantity"/>
@@ -14,6 +14,15 @@
                                 </button>
                             </div>
                         </div>
+                    </div>
+                    <div class="d-block o_sidebar_cart mb8">
+                        <h2>Cart</h2>
+                        <div class="o_cart_details">
+                            There are no items in the cart.
+                        </div>
+                        <button class="btn btn-primary mt-3">
+                            Checkout
+                        </button>
                     </div>
                 </div>
             </div>

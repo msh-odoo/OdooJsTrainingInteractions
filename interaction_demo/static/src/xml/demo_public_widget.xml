@@ -19,4 +19,15 @@
             </div>
         </Dialog>
     </t>
+
+    <t t-name="interaction_demo.cart_details">
+        <ul class="list-group">
+            <li class="list-group-item" t-foreach="cartItems" t-as="item" t-key="item.id">
+                <div class="d-flex justify-content-between">
+                    <span t-out="item.name"/>
+                    <span t-out="item.quantity"/>
+                </div>
+            </li>
+        </ul>
+    </t>
 </templates>

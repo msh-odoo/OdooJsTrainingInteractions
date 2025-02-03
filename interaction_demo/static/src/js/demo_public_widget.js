@@ -2,15 +2,10 @@ import { _t } from "@web/core/l10n/translation";
 import { Component } from "@odoo/owl";
 import { Dialog } from "@web/core/dialog/dialog";
 import publicWidget from "@web/legacy/js/public/public_widget";
+import { renderToElement } from "@web/core/utils/render";
 
 publicWidget.registry.DemoPublicWidget = publicWidget.Widget.extend({
     selector: '.o_public_widget',
-    // t-att-class="{'btn-primary': !addedInCart, 'btn-outline-primary': addedInCart}"
-    // t-att-class="{'is-invalid': inError}"
-    // t-on-click.prevent="onToggleSubscribeClick"
-    // t-on-click="onImageClick"
-    // t-att-class="{'btn-primary': !addedInCart, 'btn-outline-primary': addedInCart}"
-    // <t t-out="addedInCart ? _t('Added') : _t('Add To Cart')"/>
 
     events: {
         'click .image-zoom': 'onImageZoomClick',
@@ -28,6 +23,13 @@ publicWidget.registry.DemoPublicWidget = publicWidget.Widget.extend({
         this._setupDynamicContent();
     },
 
+    _openImageZoom: function (imageSrc) {
+        // Logic to display the zoomed image
+        this.call('dialog', 'add', ZoomImageDialog, {
+            imageSrc: imageSrc,
+        });
+    },
+
     _setupDynamicContent: function () {
         this.el.querySelectorAll('.form-control').forEach((el) => {
             el.classList.toggle("is-invalid", this.inError)
@@ -37,6 +39,7 @@ publicWidget.registry.DemoPublicWidget = publicWidget.Widget.extend({
             btn.classList.toggle('btn-outline-primary', this.addedInCart);
             btn.textContent = this.addedInCart ? _t("Remove From Cart") : _t("Add To Cart");
         });
+        this.el.classList.toggle('o_added', this.addedInCart);
     },
 
     onAddToCartClick: function (ev) {
@@ -48,6 +51,7 @@ publicWidget.registry.DemoPublicWidget = publicWidget.Widget.extend({
         }
         if (!this.inError) {
             this.addedInCart = !this.addedInCart;
+            Component.env.bus.trigger('cart_updated', {item: {'id': 1, 'name': 'Product 1', 'quantity': 1}});
         }
         this._setupDynamicContent();
     },
@@ -55,20 +59,49 @@ publicWidget.registry.DemoPublicWidget = publicWidget.Widget.extend({
     onImageZoomClick: function (ev) {
         this._openImageZoom(ev.currentTarget.getAttribute('src'));
     },
+});
 
-    _openImageZoom: function (imageSrc) {
-        // Logic to display the zoomed image
-        this.call('dialog', 'add', ZoomImageDialog, {
-            imageSrc: imageSrc,
-        });
+const SidebarCartWidget = publicWidget.Widget.extend({
+    template: 'interaction_demo.cart_details',
+
+    init: function (parent, action) {
+        this._super(parent, action);
+        this.cartItems = [];
     },
+    start() {
+        Component.env.bus.addEventListener('cart_updated', this._onCartUpdated.bind(this));
+        return this._super(...arguments);
+    },
+
+    _updateUI() {
+        // Update the UI with the cart items
+        const cartContainer = this.el.querySelector('.o_cart_details');
+        const cartDetails = renderToElement("interaction_demo.cart_details", {
+            cartItems: this.cartItems,
+        });
+        cartContainer.innerHTML = cartDetails.innerHTML;
+    },
+
+    _onCartUpdated: function (ev) {
+        this.cartItems.push({id: 1, name: "Product 1", quantity: 1});
+        this.trigger_up('item_added', {item: {'id': 1, 'name': 'Product 1', 'quantity': 1}});
+        this._updateUI();
+    }
 });
 
 publicWidget.registry.PublicWidgetPage = publicWidget.Widget.extend({
     selector: '.o_public_widget_page',
+    custom_events: {
+        'item_added': '_onItemAdded',
+    },
 
+    init: function (parent, action) {
+        this._super(parent, action);
+        this.sidebarCart = new SidebarCartWidget(this);
+    },
     start: function () {
         this._super.apply(this, arguments);
+        this.sidebarCart.attachTo(this.el.querySelector('.o_sidebar_cart'));
         document.addEventListener('click', (ev) => {
             const dialogEl = document.querySelector(".o-main-components-container .modal-dialog");
             if (dialogEl && !dialogEl.contains(ev.target)) {
@@ -76,6 +109,28 @@ publicWidget.registry.PublicWidgetPage = publicWidget.Widget.extend({
             }
         });
     },
+
+    /**
+     * Display animation when item is added.
+     *
+     * @param {OdooEvent} ev 
+     */
+    _onItemAdded(ev) {
+        // display item added animation here
+        const animationEl = document.createElement('div');
+        animationEl.className = 'item-added-animation';
+        const imgEl = document.createElement("img");
+        imgEl.setAttribute("src", "/interaction_demo/static/img/thumpsup.png");
+        animationEl.appendChild(imgEl);
+        document.body.appendChild(animationEl);
+
+        setTimeout(() => {
+            animationEl.classList.add('fade-out');
+            animationEl.addEventListener('transitionend', () => {
+                animationEl.remove();
+            });
+        }, 1000);
+    }
 });
 
 export class ZoomImageDialog extends Component {
