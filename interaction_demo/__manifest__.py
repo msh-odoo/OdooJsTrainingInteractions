@@ -17,6 +17,7 @@
             "interaction_demo/static/src/xml/demo_public_widget.xml",
             "interaction_demo/static/src/js/demo_public_widget.js",
             "interaction_demo/static/src/scss/demo_public_widget.scss",
+            "interaction_demo/static/src/interactions/demo_interaction.js",
         ],
     },
     "installable": True,

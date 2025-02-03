@@ -32,16 +32,27 @@
     <template id="interaction_page" name="Interaction Page">
         <t t-call="website.layout">
             <div class="oe_structure">
-                <div class="container">
+                <div class="container o_interaction_page">
                     <h1>Interaction Example</h1>
-                    <div class="o_public_widget" t-foreach="[1,2,3,4]" t-as="index">
-                        <img t-attf-src="/my_odoo_module/static/src/img/{{index}}.png" alt="Sample Image" class="o_widget_image"/>
-                        <div class="o_widget_content">
-                            <input type="text" class="form-control" placeholder="Enter something..."/>
-                            <button class="o_mg_subscribe_btn">
-                                
-                            </button>
+                    <div class="row">
+                        <div class="o_interaction col-3 mb8" t-foreach="[1,2,3,4]" t-as="index">
+                            <img t-attf-src="/interaction_demo/static/img/{{index}}.jpeg" class="o_widget_image image-zoom img-fluid img-thumbnail rounded mx-auto d-flex mb8" alt="Product Image"/>
+                            <div class="o_widget_content">
+                                <input type="text" class="o_quantity form-control mb8" placeholder="Enter Quantity"/>
+                                <button class="o_add_cart_btn">
+                                    Add to Cart
+                                </button>
+                            </div>
                         </div>
+                    </div>
+                    <div class="d-block o_sidebar_cart mb8">
+                        <h2>Cart</h2>
+                        <div class="o_cart_details">
+                            There are no items in the cart.
+                        </div>
+                        <button class="btn btn-primary mt-3">
+                            Checkout
+                        </button>
                     </div>
                 </div>
             </div>
