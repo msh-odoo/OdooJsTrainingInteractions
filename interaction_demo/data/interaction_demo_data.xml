@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="menu_public" model="website.menu">
+            <field name="name">Public</field>
+            <field name="url">/public_widget</field>
+            <field name="parent_id" ref="website.main_menu"/>
+            <field name="sequence" type="int">10</field>
+        </record>
+
+        <record id="menu_interaction" model="website.menu">
+            <field name="name">Interaction</field>
+            <field name="url">/interaction</field>
+            <field name="parent_id" ref="website.main_menu"/>
+            <field name="sequence" type="int">10</field>
+        </record>
+    </data>
+</odoo>

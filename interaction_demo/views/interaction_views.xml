@@ -1,0 +1,36 @@
+<odoo>
+    <data>
+        <record id="view_public_widget_page" model="ir.ui.view">
+            <field name="name">public.widget.page</field>
+            <field name="model">website.page</field>
+            <field name="arch" type="xml">
+                <template id="public_widget_template">
+                    <t t-call="website.layout">
+                        <div class="container">
+                            <h1>Public Widget Page</h1>
+                            <div class="o_public_widget" t-att-class="dynamicContent._root['t-att-class']">
+                                <img src="/my_odoo_module/static/src/img/sample_image.png" 
+                                     t-on-click.prevent="onImageClick" 
+                                     alt="Sample Image"/>
+                                <div class="o_mg_subscribe_btn" 
+                                     t-on-click.prevent="onToggleSubscribeClick" 
+                                     t-att-class="dynamicContent['.o_mg_subscribe_btn']['t-att-class']">
+                                    <t t-out="dynamicContent['.o_mg_subscribe_btn']['t-out']"/>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </template>
+            </field>
+        </record>
+
+        <record id="action_public_widget" model="ir.actions.act_window">
+            <field name="name">Public Widget</field>
+            <field name="res_model">website.page</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_public_widget_page"/>
+        </record>
+
+        <menuitem id="menu_public_widget" name="Public Widget" action="action_public_widget" parent="website.menu_website_root"/>
+    </data>
+</odoo>
