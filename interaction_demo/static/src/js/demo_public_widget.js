@@ -10,27 +10,29 @@ publicWidget.registry.DemoPublicWidget = publicWidget.Widget.extend({
     events: {
         'click .image-zoom': 'onImageZoomClick',
         'click .o_add_cart_btn': 'onAddToCartClick',
+        'click .o_wishlist_btn': 'onWishlistClick',
     },
 
-    init: function (parent, action) {
+    init(parent, action) {
         this._super(parent, action);
         this.addedInCart = false;
         this.inError = false;
+        this.isInWishlist = false;
     },
 
-    start: function () {
+    start() {
         this._super.apply(this, arguments);
         this._setupDynamicContent();
     },
 
-    _openImageZoom: function (imageSrc) {
+    _openImageZoom(imageSrc) {
         // Logic to display the zoomed image
         this.call('dialog', 'add', ZoomImageDialog, {
             imageSrc: imageSrc,
         });
     },
 
-    _setupDynamicContent: function () {
+    _setupDynamicContent() {
         this.el.querySelectorAll('.form-control').forEach((el) => {
             el.classList.toggle("is-invalid", this.inError)
         });
@@ -40,9 +42,13 @@ publicWidget.registry.DemoPublicWidget = publicWidget.Widget.extend({
             btn.textContent = this.addedInCart ? _t("Remove From Cart") : _t("Add To Cart");
         });
         this.el.classList.toggle('o_added', this.addedInCart);
+
+        this.el.querySelectorAll('.o_wishlist_btn').forEach((btn) => {
+            btn.classList.toggle('wishlisted', this.isInWishlist);
+        });
     },
 
-    onAddToCartClick: function (ev) {
+    onAddToCartClick(ev) {
         ev.preventDefault();
         const val = parseInt(this.el.querySelector('.o_quantity').value)
         this.inError = false;
@@ -51,14 +57,21 @@ publicWidget.registry.DemoPublicWidget = publicWidget.Widget.extend({
         }
         if (!this.inError) {
             this.addedInCart = !this.addedInCart;
-            Component.env.bus.trigger('cart_updated', {item: {'id': 1, 'name': 'Product 1', 'quantity': 1}});
+            Component.env.bus.trigger('cart_updated', {item: {'id': parseInt(Math.random() * 100), 'name': 'Product 1', 'quantity': 1}});
         }
         this._setupDynamicContent();
     },
 
-    onImageZoomClick: function (ev) {
+    onImageZoomClick(ev) {
         this._openImageZoom(ev.currentTarget.getAttribute('src'));
     },
+
+    onWishlistClick(ev) {
+        ev.preventDefault();
+        this.isInWishlist = !this.isInWishlist;
+        Component.env.bus.trigger('item_wishlisted', {wishlistItem: {'id': 1, 'name': 'Product 1', 'quantity': 1}});
+        this._setupDynamicContent();
+    }
 });
 
 const SidebarCartWidget = publicWidget.Widget.extend({
@@ -83,7 +96,7 @@ const SidebarCartWidget = publicWidget.Widget.extend({
     },
 
     _onCartUpdated: function (ev) {
-        this.cartItems.push({id: 1, name: "Product 1", quantity: 1});
+        this.cartItems.push(ev.detail.item);
         this.trigger_up('item_added', {item: {'id': 1, 'name': 'Product 1', 'quantity': 1}});
         this._updateUI();
     }
@@ -91,6 +104,9 @@ const SidebarCartWidget = publicWidget.Widget.extend({
 
 publicWidget.registry.PublicWidgetPage = publicWidget.Widget.extend({
     selector: '.o_public_widget_page',
+    events: {
+        'click .o_remove_wishlist': 'onWishlistRemoveClick',
+    },
     custom_events: {
         'item_added': '_onItemAdded',
     },
@@ -98,6 +114,7 @@ publicWidget.registry.PublicWidgetPage = publicWidget.Widget.extend({
     init: function (parent, action) {
         this._super(parent, action);
         this.sidebarCart = new SidebarCartWidget(this);
+        Component.env.bus.addEventListener('item_wishlisted', this._onItemWishlisted.bind(this));
     },
     start: function () {
         this._super.apply(this, arguments);
@@ -130,7 +147,27 @@ publicWidget.registry.PublicWidgetPage = publicWidget.Widget.extend({
                 animationEl.remove();
             });
         }, 1000);
-    }
+    },
+
+    _onItemWishlisted(ev) {
+        const wishlistContainer = this.el.querySelector('.o_sidebar_wishlist');
+        const wishlistDetails = renderToElement("interaction_demo.wishlist_items", {
+            wishlistItem: ev.detail.wishlistItem,
+        });
+        wishlistContainer.appendChild(wishlistDetails);
+        wishlistContainer.querySelector(".o_wishlist_no_items").classList.add("d-none");
+        wishlistContainer.querySelector(".o_wishlist_items")?.classList.remove("d-none");
+    },
+
+    onWishlistRemoveClick(ev) {
+        // Logic to remove item from wishlist
+        ev.target.closest('li').remove();
+        const wishlistContainer = this.el.querySelector('.o_sidebar_wishlist');
+        if (!wishlistContainer.querySelectorAll("li").length) {
+            this.el.querySelector(".o_wishlist_no_items").classList.remove("d-none");
+            this.el.querySelector(".o_wishlist_items")?.classList.add("d-none");
+        }
+    },
 });
 
 export class ZoomImageDialog extends Component {

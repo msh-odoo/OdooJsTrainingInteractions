@@ -1,7 +1,10 @@
-.o_public_widget {
+.o_public_widget, .o_interaction {
     &.o_added {
         background-color: green;
         opacity: 0.5;
+    }
+    .wishlisted {
+        color: red;
     }
 }
 .o_img_zoom_body {

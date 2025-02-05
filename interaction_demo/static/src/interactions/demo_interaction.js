@@ -5,38 +5,36 @@ import { renderToElement } from "@web/core/utils/render";
 import { Interaction } from "@web/public/interaction";
 import { registry } from "@web/core/registry";
 
-// t-att-class="{'btn-primary': !addedInCart, 'btn-outline-primary': addedInCart}"
-// t-att-class="{'is-invalid': inError}"
-// t-on-click.prevent="onToggleSubscribeClick"
-// t-on-click="onImageClick"
-// t-att-class="{'btn-primary': !addedInCart, 'btn-outline-primary': addedInCart}"
-// <t t-out="addedInCart ? _t('Added') : _t('Add To Cart')"/>
-// _root: { "t-att-class": (el) => ({ "o_added": this.addedInCart, }),
+// Note: I don't have good example of waitFor here but benefit of using waiFor is it calls updateContent once promise is resolved, it wraps promise inside promise
 
 class DemoInteraction extends Interaction {
     static selector = ".o_interaction";
     dynamicContent = {
         _root: {
             "t-att-class": (el) => ({ "o_added": this.addedInCart, }),
+            "t-att-data-quantity": () => 1,
         },
         ".image-zoom": {
             "t-on-click.stop": this.onImageZoomClick,
         },
-        "o_add_cart_btn": {
+        ".o_add_cart_btn": {
             "t-on-click.prevent": this.onAddToCartClick,
+            "t-att-class": () => ({ "btn-primary": !this.addedInCart, "btn-outline-primary": this.addedInCart }),
+            "t-out": () => this.addedInCart ? _t("Remove From Cart") : _t("Add To Cart"),
         },
         ".form-control": {
             "t-att-class": () => ({ "is-invalid": this.inError }),
         },
-        "o_add_cart_btn": {
-            "t-att-class": () => ({ "btn-primary": !this.addedInCart, "btn-outline-primary": this.addedInCart }),
-            "t-out": () => this.addedInCart ? _t("Remove From Cart") : _t("Add To Cart"),
+        ".o_wishlist_btn": {
+            "t-on-click.prevent": this.onWishlistClick,
+            "t-att-class": () => ({ "wishlisted": this.isInWishlist }),
         },
     };
 
     setup() {
         this.addedInCart = false;
         this.inError = false;
+        this.isInWishlist = false;
     }
 
     _openImageZoom(imageSrc) {
@@ -47,7 +45,6 @@ class DemoInteraction extends Interaction {
     }
 
     onAddToCartClick(ev) {
-        ev.preventDefault();
         const val = parseInt(this.el.querySelector('.o_quantity').value)
         this.inError = false;
         if (!val || val < 0) {
@@ -55,8 +52,13 @@ class DemoInteraction extends Interaction {
         }
         if (!this.inError) {
             this.addedInCart = !this.addedInCart;
-            Component.env.bus.trigger('cart_updated', {item: {'id': 1, 'name': 'Product 1', 'quantity': 1}});
+            this.env.bus.trigger('cart_updated', {item: {'id': parseInt(Math.random() * 100), 'name': 'Product 1', 'quantity': 1}});
         }
+    }
+
+    onWishlistClick(ev) {
+        this.isInWishlist = !this.isInWishlist;
+        this.env.bus.trigger('item_wishlisted', {wishlistItem: {'id': 1, 'name': 'Product 1', 'quantity': 1}});
     }
 
     onImageZoomClick(ev) {
@@ -76,12 +78,12 @@ class SidebarCartComponent extends Component {
         super.setup();
         this.cartItems = useState([]);
         onMounted(() => {
-            Component.env.bus.addEventListener('cart_updated', this._onCartUpdated.bind(this));
+            this.env.bus.addEventListener('cart_updated', this._onCartUpdated.bind(this));
         });
     }
 
     _onCartUpdated(ev) {
-        this.cartItems.push({id: 1, name: "Product 1", quantity: 1});
+        this.cartItems.push(ev.detail.item);
         this.env.bus.trigger('item_added', {item: {'id': 1, 'name': 'Product 1', 'quantity': 1}});
     }
 }
@@ -92,12 +94,30 @@ class InteractionPage extends Interaction {
         _document: {
             "t-on-click": this.onDocumentClick,
         },
+        ".o_wishlist_no_items": {
+            "t-att-class": () => ({ "d-none": this.wishlistHasItems }),
+        },
+        ".o_wishlist_items": {
+            "t-att-class": () => ({ "d-none": !this.wishlistHasItems }),
+        },
+        ".o_remove_wishlist": {
+            "t-on-click": this.onWishlistRemoveClick,
+        },
+    };
+
+    onDocumentClick(ev) {
+        const dialogEl = document.querySelector(".o-main-components-container .modal-dialog");
+        if (dialogEl && !dialogEl.contains(ev.target)) {
+            this.call('dialog', 'closeAll');
+        }
     }
 
     setup() {
+        this.wishlistHasItems = false;
         const sidebarCartEl = this.el.querySelector('.o_sidebar_cart');
         this.mountComponent(sidebarCartEl, SidebarCartComponent);
         this.env.bus.addEventListener('item_added', this._onItemAdded.bind(this));
+        this.env.bus.addEventListener('item_wishlisted', this._onItemWishlisted.bind(this));
     }
 
     onDocumentClick(ev) {
@@ -121,12 +141,31 @@ class InteractionPage extends Interaction {
         animationEl.appendChild(imgEl);
         document.body.appendChild(animationEl);
 
-        setTimeout(() => {
+        this.waitForTimeout(() => {
             animationEl.classList.add('fade-out');
             animationEl.addEventListener('transitionend', () => {
                 animationEl.remove();
             });
         }, 1000);
+    }
+
+    _onItemWishlisted(ev) {
+        this.wishlistHasItems = true;
+        const wishlistContainer = this.el.querySelector('.o_sidebar_wishlist');
+        const wishlistDetails = renderToElement("interaction_demo.wishlist_items", {
+            wishlistItem: ev.detail.wishlistItem,
+        });
+        // wishlistContainer.appendChild(wishlistDetails); // If we add through appendChild, delegated events will not work
+        this.insert(wishlistDetails, this.el.querySelector(".o_wishlist_items"));
+    }
+
+    onWishlistRemoveClick(ev) {
+        // Logic to remove item from wishlist
+        ev.target.closest('li').remove();
+        const wishlistContainer = this.el.querySelector('.o_sidebar_wishlist');
+        if (!wishlistContainer.querySelectorAll("li").length) {
+            this.wishlistHasItems = false;
+        }
     }
 }
 

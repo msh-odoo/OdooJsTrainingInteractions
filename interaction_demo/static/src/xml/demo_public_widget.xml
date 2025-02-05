@@ -30,4 +30,14 @@
             </li>
         </ul>
     </t>
+
+    <t t-name="interaction_demo.wishlist_items">
+        <li class="list-group-item">
+            <div class="d-flex justify-content-between">
+                <span t-out="wishlistItem.name"/>
+                <span t-out="wishlistItem.quantity"/>
+                <div><span class="fa fa-times o_remove_wishlist"/></div>
+            </div>
+        </li>
+    </t>
 </templates>
